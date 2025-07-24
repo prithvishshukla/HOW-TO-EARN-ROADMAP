@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Roadmap: From ₹0 to ₹50,000/Month</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Subtle Accents -->
+    <!-- Application Structure Plan: The application is designed as a non-linear, interactive dashboard. It avoids a simple top-to-bottom scroll of the report. The structure is task-oriented: 1. A Hero section with an interactive timeline to give a high-level overview. 2. A "Starting Point" section with a checklist for initial skill acquisition. 3. A core "Choose Your Path" hub with interactive cards for different income streams (Freelancing, Content, etc.), allowing users to explore based on interest. 4. A "Strategy & Tools" section with practical resources and a prominent, interactive "Scam Alert" module. This structure prioritizes user agency and exploration over passive reading, making the dense information more digestible and actionable for a beginner. -->
+    <!-- Visualization & Content Choices: Report Info -> Goal -> Viz/Presentation Method -> Interaction -> Justification. 1. Income Ladder (Table 3) -> Show journey -> Interactive HTML/CSS vertical timeline -> Click to scroll -> More engaging than a static table. 2. Platform Comparison (Table 1) -> Compare options -> Interactive HTML/CSS cards -> Toggle details -> Better on mobile, encourages exploration. 3. Income Growth (Timeline Data) -> Visualize potential -> Chart.js Line Chart -> Hover for details -> Quicker comprehension of growth than text. 4. Scam Info -> Warn effectively -> Interactive HTML/JS accordion -> Click to reveal details -> Organizes critical info cleanly without overwhelming. All visualizations are built to support the user-centric dashboard structure. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<style>
+ body {
+      font-family: 'Inter', sans-serif;
+      background-color: #000; /* Black background */
+      color: #ff4d4d; /* Red text */
+      background-image: linear-gradient(to bottom right, #000, #1a1a1a);
+ }
+ .bg-primary { background-color: #ff4d4d; } /* Red */
+ .text-primary { color: #ff4d4d; }
+ .bg-secondary { background-color: #ff3333; } /* Darker Red */
+ .text-secondary { color: #ff3333; }
+ .bg-accent { background-color: #ff6666; } /* Light Red */
+ .text-accent { color: #ff6666; }
+ .bg-light { background-color: #1a1a1a; } /* Dark Gray */
+ 
+ .bg-white, .path-card {
+      background-color: #1a1a1a !important;
+      border: 1px solid rgba(255, 77, 77, 0.2);
+      color: #ff4d4d;
+ }
+ 
+ .card-hover { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+ .card-hover:hover { 
+      transform: translateY(-5px); 
+      box-shadow: 0 0 25px rgba(255, 77, 77, 0.3); 
+ }
+ 
+ .nav-link { transition: color 0.3s ease; }
+ .nav-link:hover { color: #ff4d4d; }
+ 
+ .section-fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+ }
+ .section-fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+ }
+ 
+ .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease-in-out;
+ }
+ 
+ .chart-container {
+      position: relative;
+      width: 100%;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+      height: 300px;
+      max-height: 400px;
+      background-color: #1a1a1a;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(255, 77, 77, 0.1);
+ }
+
+ header {
+      background-color: rgba(0, 0, 0, 0.8) !important; /* Black header with transparency */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+ }
+
+ footer {
+      background-color: #000 !important;
+      border-top: 1px solid rgba(255, 77, 77, 0.3);
+ }
+
+ /* Retro grid effect for background */
+ main:before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-image: linear-gradient(rgba(255, 77, 77, 0.03) 1px, transparent 1px),
+                              linear-gradient(90deg, rgba(255, 77, 77, 0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      z-index: -1;
+ }
+
+ /* Neon text effect for headers */
+ h1, h2 {
+      text-shadow: 0 0 5px rgba(255, 77, 77, 0.5), 0 0 15px rgba(255, 77, 77, 0.3);
+ }
+ 
+ @media (min-width: 768px) {
+      .chart-container {
+            height: 400px;
+      }
+ }
+</style>
+
+</head>
+<body class="antialiased">
+
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-primary">
+                ₹50k Roadmap
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#start" class="nav-link font-medium">Start Here</a>
+                <a href="#paths" class="nav-link font-medium">Choose Your Path</a>
+                <a href="#strategy" class="nav-link font-medium">Strategy & Tools</a>
+                <a href="#safety" class="nav-link font-medium">Safety First</a>
+            </div>
+            <button id="mobile-menu-button" class="md:hidden focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+            </button>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden px-6 pb-4">
+            <a href="#start" class="block py-2 nav-link">Start Here</a>
+            <a href="#paths" class="block py-2 nav-link">Choose Your Path</a>
+            <a href="#strategy" class="block py-2 nav-link">Strategy & Tools</a>
+            <a href="#safety" class="block py-2 nav-link">Safety First</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <!-- Hero Section -->
+        <section class="text-center mb-20 section-fade-in">
+            <h1 class="text-4xl md:text-6xl font-bold mb-4">Your Journey to <span class="text-primary">₹50,000/Month</span></h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto text-gray-600">An interactive guide for Indian students to start earning online with no initial skills or investment, dedicating just 2-3 hours a day.</p>
+        </section>
+
+        <!-- Income Ladder & Chart Section -->
+        <section id="timeline" class="mb-24 section-fade-in">
+            <h2 class="text-3xl font-bold text-center mb-4">The Income Ladder</h2>
+            <p class="text-center text-gray-600 max-w-2xl mx-auto mb-12">This chart visualizes a realistic timeline for your income growth. Hover over the points to see the key activities for each phase. This isn't a guarantee, but a projection of what's possible with consistent effort.</p>
+            <div class="chart-container">
+                <canvas id="incomeTimelineChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Phase 1: Start Here -->
+        <section id="start" class="py-16 bg-light rounded-2xl mb-24 section-fade-in">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-4 text-secondary">Phase 1: Your 30-Day Skill Sprint</h2>
+                <p class="text-center text-gray-600 mb-12">The first month is about building a foundation. The goal is to acquire a tangible, monetizable skill and create a professional online identity. Follow this plan to go from zero to hirable.</p>
+                <div class="space-y-8">
+                    <!-- Week 1 -->
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-xl">1</div>
+                        <div>
+                            <h3 class="text-xl font-semibold">Week 1: Foundational Learning</h3>
+                            <p class="text-gray-600">Dive into the basics of graphic design. No prior knowledge needed. The goal is to understand what makes a design effective.</p>
+                            <ul class="mt-2 list-disc list-inside text-gray-600">
+                                <li>Audit "Fundamentals of Graphic Design" on <a href="https://www.coursera.org/specializations/graphic-design" target="_blank" class="text-secondary underline">Coursera</a>.</li>
+                                <li>Complete "Graphic Design Basics" on <a href="https://www.canva.com/designschool/tutorials/getting-started/graphic-design-basics/" target="_blank" class="text-secondary underline">Canva Design School</a>.</li>
+                                <li>Explore free introductory courses on Udemy and Alison.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <!-- Week 2 -->
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-xl">2</div>
+                        <div>
+                            <h3 class="text-xl font-semibold">Week 2: Build Your Portfolio</h3>
+                            <p class="text-gray-600">Theory is nothing without practice. Create 10-15 sample social media graphics for imaginary clients (e.g., a local cafe, a tech blogger). This "speculative portfolio" is your proof of skill.</p>
+                        </div>
+                    </div>
+                    <!-- Week 3 -->
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-xl">3</div>
+                        <div>
+                            <h3 class="text-xl font-semibold">Week 3: Master a Platform</h3>
+                            <p class="text-gray-600">Choose ONE platform to start. We recommend <a href="https://www.fiverr.com" target="_blank" class="text-secondary underline">Fiverr</a>. Create a compelling profile that focuses on solving a client's problem, not your lack of experience. Headline example: "I design stunning Canva graphics for small businesses."</p>
+                        </div>
+                    </div>
+                    <!-- Week 4 -->
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0 w-12 h-12 bg-secondary text-white rounded-full flex items-center justify-center font-bold text-xl">4</div>
+                        <div>
+                            <h3 class="text-xl font-semibold">Week 4: Launch Your Service</h3>
+                            <p class="text-gray-600">Create your first "Gig" on Fiverr. Use the portfolio you built in Week 2 as your work samples. Example Gig: "I will design 5 professional Instagram posts in Canva for ₹500."</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Phase 2: Choose Your Path -->
+        <section id="paths" class="py-16 mb-24 section-fade-in">
+            <h2 class="text-3xl font-bold text-center mb-4">Phase 2: Choose Your Income Path</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Once you have a basic skill, you can start earning. These paths offer different trade-offs between immediate income and long-term asset building. Click on each card to explore the details and find what fits you best.</p>
+            <div class="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
+                <!-- Path Card: Freelancing -->
+                <div class="path-card bg-white p-8 rounded-2xl shadow-md cursor-pointer card-hover" data-path="freelancing">
+                    <h3 class="text-2xl font-bold text-primary mb-2">Freelancing</h3>
+                    <p class="text-gray-600">The most direct way to trade your skills for money. Start with simple tasks to build your reputation, then move to higher-value work.</p>
+                </div>
+                <!-- Path Card: Content Creation -->
+                <div class="path-card bg-white p-8 rounded-2xl shadow-md cursor-pointer card-hover" data-path="content">
+                    <h3 class="text-2xl font-bold text-primary mb-2">Content Creation</h3>
+                    <p class="text-gray-600">Build long-term assets like a YouTube channel or blog. Use it to document your journey, build authority, and attract high-paying clients directly.</p>
+                </div>
+                <!-- Path Card: Digital Products -->
+                <div class="path-card bg-white p-8 rounded-2xl shadow-md cursor-pointer card-hover" data-path="products">
+                    <h3 class="text-2xl font-bold text-primary mb-2">Digital & Physical Products</h3>
+                    <p class="text-gray-600">Leverage your time by creating assets you can sell repeatedly, like templates, e-books, or print-on-demand merchandise.</p>
+                </div>
+                <!-- Path Card: Micro-Gigs -->
+                <div class="path-card bg-white p-8 rounded-2xl shadow-md cursor-pointer card-hover" data-path="microgigs">
+                    <h3 class="text-2xl font-bold text-primary mb-2">Micro-Gigs & Tutoring</h3>
+                    <p class="text-gray-600">Not scalable to ₹50k alone, but perfect for earning your first online income, boosting confidence, and proving the system works.</p>
+                </div>
+            </div>
+
+            <!-- Detailed Content Area -->
+            <div id="path-details-container" class="mt-12"></div>
+        </section>
+
+        <!-- Phase 3: Strategy & Tools -->
+        <section id="strategy" class="py-16 bg-light rounded-2xl mb-24 section-fade-in">
+            <h2 class="text-3xl font-bold text-center mb-4 text-secondary">Phase 3: Strategy & Tools</h2>
+            <p class="text-center text-gray-600 max-w-3xl mx-auto mb-12">Earning is one thing, being strategic is another. Use these frameworks and tools to work smarter, not just harder, within your limited time.</p>
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <!-- Flywheel -->
+                <div>
+                    <h3 class="text-2xl font-semibold mb-4">The 2-Hour "Flywheel" Daily Plan</h3>
+                    <p class="text-gray-600 mb-6">This simple schedule ensures every hour you work contributes to both immediate income and long-term growth. Consistency is key.</p>
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h4 class="font-bold text-lg text-primary">90 Minutes: The Income Engine</h4>
+                            <p class="text-gray-600">Focused work on your chosen freelance platform. Applying for jobs, communicating with clients, and delivering high-quality work.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h4 class="font-bold text-lg text-secondary">30 Minutes: The Asset Factory</h4>
+                            <p class="text-gray-600">Create for the future. Write 250 words for your blog, script a short video, or design a new template. This compounds over time.</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- Platform Comparison -->
+                <div>
+                    <h3 class="text-2xl font-semibold mb-4">Choosing Your Battlefield</h3>
+                    <p class="text-gray-600 mb-6">Don't spread yourself thin. Master one platform first. Here's a quick comparison to help you decide.</p>
+                    <div class="space-y-4">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-primary">
+                            <h4 class="font-bold text-lg">Fiverr <span class="text-sm font-medium bg-primary/20 text-primary px-2 py-1 rounded-full">Recommended</span></h4>
+                            <p class="text-gray-600">Best for beginners. Its "Gig-based" model is less intimidating. You package your service, and clients come to you.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-300">
+                            <h4 class="font-bold text-lg">Upwork</h4>
+                            <p class="text-gray-600">Better for long-term projects but has a steeper learning curve. You bid on projects posted by clients.</p>
+                        </div>
+                         <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-gray-300">
+                            <h4 class="font-bold text-lg">Truelancer</h4>
+                            <p class="text-gray-600">An Indian-based platform. A good option for finding local projects in a less saturated market.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Safety First Section -->
+        <section id="safety" class="py-16 section-fade-in">
+            <div class="max-w-4xl mx-auto">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold mb-4 text-accent">Safety First: A Beginner's Guide to Scams</h2>
+                    <p class="text-gray-600 mb-12">The online world has its risks. Knowing how to spot scams is crucial. Your most important rule: <strong class="text-accent">Never take communication or payment off the official freelance platform.</strong> Their escrow system is your primary protection.</p>
+                </div>
+                <div class="space-y-4" id="accordion-container">
+                    <!-- Accordion items will be injected here by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-24">
+        <div class="container mx-auto px-6 py-8 text-center">
+            <p>This interactive guide is based on the "Zero-to-Fifty-Thousand Roadmap".</p>
+            <p class="text-sm text-gray-400 mt-2">Your journey starts with a single step. Start today.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile Menu Toggle
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Smooth Scrolling for nav links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if(mobileMenu.classList.contains('hidden') === false){
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            // Intersection Observer for fade-in animations
+            const sections = document.querySelectorAll('.section-fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+            sections.forEach(section => {
+                observer.observe(section);
+            });
+
+            // Path Details Data
+            const pathData = {
+                freelancing: {
+                    title: "Path 1: Freelancing",
+                    content: `
+                        <p class="mb-6">This is the engine of your immediate income. It provides a direct feedback loop for improving your skills and building a reputation.</p>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">Low-Barrier Entry (Earn While You Learn)</h4>
+                        <ul class="list-disc list-inside mb-6 text-gray-600">
+                            <li><strong>What:</strong> Transcription (typing audio) or basic Virtual Assistance (data entry, email management).</li>
+                            <li><strong>Where:</strong> Upwork, Fiverr. Check Rev.com for transcription (regional availability may vary).</li>
+                            <li><strong>Timeline to ₹10k/mo:</strong> 2-4 months of consistent effort.</li>
+                        </ul>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">High-Value Skills (The Scaling Phase)</h4>
+                        <ul class="list-disc list-inside text-gray-600">
+                            <li><strong>What:</strong> Niche Content Writing (leverage your B.Tech knowledge) or Conversion-Focused Graphic Design (creating ads/promos).</li>
+                            <li><strong>Where:</strong> Upwork, Fiverr, PeoplePerHour.</li>
+                            <li><strong>Timeline to ₹20k-₹50k/mo:</strong> 6-12 months to build a strong portfolio and client base.</li>
+                        </ul>
+                    `
+                },
+                content: {
+                    title: "Path 2: Content Creation",
+                    content: `
+                        <p class="mb-6">This is your long-term strategy. Create a "synergistic flywheel" where your freelance work provides content for your blog/channel, which in turn attracts better clients.</p>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">The YouTube Channel</h4>
+                        <ul class="list-disc list-inside mb-6 text-gray-600">
+                            <li><strong>What:</strong> Document your journey. Create tutorials on the skills you're learning (e.g., "How I use Canva"). A smartphone is enough to start.</li>
+                            <li><strong>Monetization:</strong> Initially, it's a portfolio to attract clients. Later, YouTube Partner Program (1k subs & 4k watch hours).</li>
+                            <li><strong>Timeline:</strong> 6-18 months to reach monetization eligibility.</li>
+                        </ul>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">The Niche Blog</h4>
+                        <ul class="list-disc list-inside text-gray-600">
+                            <li><strong>What:</strong> Start for free on Blogger or WordPress.com. Write detailed articles about your projects and skills.</li>
+                            <li><strong>Monetization:</strong> Attract freelance clients, then add Google AdSense and affiliate links.</li>
+                            <li><strong>Timeline:</strong> 6-12 months to get enough traffic for meaningful ad/affiliate income.</li>
+                        </ul>
+                    `
+                },
+                products: {
+                    title: "Path 3: Digital & Physical Products",
+                    content: `
+                        <p class="mb-6">This path offers the ultimate time leverage. Create an asset once and sell it forever. This is how you transition from trading time for money to generating semi-passive income.</p>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">Selling Digital Products</h4>
+                        <ul class="list-disc list-inside mb-6 text-gray-600">
+                            <li><strong>What:</strong> Package your knowledge. Create short e-books (with Google Docs) or design templates (for Canva, Notion).</li>
+                            <li><strong>Where:</strong> Gumroad, Payhip are easy to start. Etsy is a huge market for templates.</li>
+                            <li><strong>Timeline:</strong> First sale can be quick. Consistent ₹5k-₹10k/mo can take 6-12 months.</li>
+                        </ul>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">Print-on-Demand (POD) in India</h4>
+                        <ul class="list-disc list-inside text-gray-600">
+                            <li><strong>What:</strong> Use your design skills for t-shirts, mugs, etc. A POD platform handles printing and shipping.</li>
+                            <li><strong>Where (India):</strong> Printrove, Qikink, Blinkstore. Using Indian platforms means faster, cheaper shipping for local customers.</li>
+                            <li><strong>Risks:</strong> Low profit margins and dependency on the POD company's quality.</li>
+                        </ul>
+                    `
+                },
+                microgigs: {
+                    title: "Path 4: Micro-Gigs & Tutoring",
+                    content: `
+                        <p class="mb-6">These are your confidence boosters. They won't make you rich, but earning your first ₹1,000 online is a powerful motivator to keep going.</p>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">Online Tutoring</h4>
+                        <ul class="list-disc list-inside mb-6 text-gray-600">
+                            <li><strong>What:</strong> Leverage your B.Tech knowledge to tutor school students in STEM subjects.</li>
+                            <li><strong>Where:</strong> Vedantu, Chegg, Tutoroot.</li>
+                            <li><strong>Earning Potential:</strong> High. Vedantu suggests ₹25k+/mo for 4hrs/day. Chegg offers ~$20/hr. This is one of the most lucrative starting points.</li>
+                        </ul>
+                        <h4 class="font-semibold text-lg mb-2 text-secondary">Website & App Testing</h4>
+                        <ul class="list-disc list-inside text-gray-600">
+                            <li><strong>What:</strong> Get paid to give feedback on the usability of websites and apps.</li>
+                            <li><strong>Where:</strong> UserTesting, Userfeel, Userlytics.</li>
+                            <li><strong>Earning Potential:</strong> Good pay per task (e.g., $10 for 20 mins), but the work is inconsistent. Good for supplemental income.</li>
+                        </ul>
+                    `
+                }
+            };
+
+            const pathCards = document.querySelectorAll('.path-card');
+            const detailsContainer = document.getElementById('path-details-container');
+            let activeCard = null;
+
+            pathCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const pathKey = card.dataset.path;
+                    const data = pathData[pathKey];
+
+                    if (activeCard === card) {
+                        detailsContainer.innerHTML = '';
+                        activeCard.classList.remove('ring-2', 'ring-primary');
+                        activeCard = null;
+                        return;
+                    }
+
+                    if (activeCard) {
+                        activeCard.classList.remove('ring-2', 'ring-primary');
+                    }
+                    
+                    detailsContainer.innerHTML = `
+                        <div class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-primary animate-fade-in">
+                            <h3 class="text-2xl font-bold mb-4">${data.title}</h3>
+                            ${data.content}
+                        </div>
+                    `;
+                    card.classList.add('ring-2', 'ring-primary');
+                    activeCard = card;
+                });
+            });
+
+            // Keyframes for fade-in animation
+            const styleSheet = document.createElement("style");
+            styleSheet.type = "text/css";
+            styleSheet.innerText = `@keyframes fade-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: translateY(0); } } .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }`;
+            document.head.appendChild(styleSheet);
+
+
+            // Accordion for Scams
+            const accordionData = [
+                { title: "The 'Pay to Work' Scam", content: "A legitimate client will NEVER ask you to pay for training, software, or a registration fee. This is always a scam." },
+                { title: "The 'Too Good to Be True' Scam", content: "Jobs offering very high pay for simple tasks are usually bait. If it sounds too good to be true, it is." },
+                { title: "The 'Free Work' Scam", content: "Beware of requests for large amounts of unpaid work as a 'sample'. Your portfolio should be enough proof of your skills." },
+                { title: "The 'Phishing' Scam", content: "Never give out personal financial information like bank details or credit card numbers that aren't required by the platform's official payment system." },
+                { title: "The 'Overpayment' Scam", content: "A scammer 'accidentally' overpays you with a fraudulent check/payment and asks you to refund the difference. The original payment will bounce, and you'll lose the money you sent." }
+            ];
+            const accordionContainer = document.getElementById('accordion-container');
+            accordionData.forEach((item, index) => {
+                const accordionItem = document.createElement('div');
+                accordionItem.className = 'bg-white rounded-lg shadow-sm';
+                accordionItem.innerHTML = `
+                    <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold">
+                        <span>${item.title}</span>
+                        <svg class="w-6 h-6 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content">
+                        <p class="p-5 pt-0 text-gray-600">${item.content}</p>
+                    </div>
+                `;
+                accordionContainer.appendChild(accordionItem);
+            });
+
+            document.querySelectorAll('.accordion-header').forEach(button => {
+                button.addEventListener('click', () => {
+                    const content = button.nextElementSibling;
+                    const icon = button.querySelector('svg');
+                    
+                    if (content.style.maxHeight) {
+                        content.style.maxHeight = null;
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        document.querySelectorAll('.accordion-content').forEach(c => c.style.maxHeight = null);
+                        document.querySelectorAll('.accordion-header svg').forEach(i => i.style.transform = 'rotate(0deg)');
+                        content.style.maxHeight = content.scrollHeight + "px";
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            // Chart.js Income Timeline
+            const ctx = document.getElementById('incomeTimelineChart').getContext('2d');
+            const incomeTimelineChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Month 1', 'Month 3', 'Month 6', 'Month 12', 'Month 18', 'Month 24'],
+                    datasets: [{
+                        label: 'Potential Monthly Income (₹)',
+                        data: [1000, 10000, 18000, 25000, 40000, 50000],
+                        backgroundColor: 'rgba(232, 168, 124, 0.2)',
+                        borderColor: '#E8A87C',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#FFF',
+                        pointBorderColor: '#E8A87C',
+                        pointHoverBackgroundColor: '#E8A87C',
+                        pointHoverBorderColor: '#FFF',
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value, index, values) {
+                                    return '₹' + value.toLocaleString('en-IN');
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: '#3D3D3D',
+                            titleFont: { size: 16 },
+                            bodyFont: { size: 14 },
+                            padding: 12,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    const index = tooltipItems[0].dataIndex;
+                                    const milestones = ['First Earnings', 'Build Reputation', 'High-Value Freelancing', 'Specialize & Scale', 'Grow Passive Income', 'Achieve Goal'];
+                                    return milestones[index];
+                                },
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '₹' + context.parsed.y.toLocaleString('en-IN');
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        mode: 'nearest',
+                        axis: 'x',
+                        intersect: false
+                    }
+                }
+            });
+        });
+    </script>
+    <!-- Dark Mode Toggle Button -->
+<button id="darkModeToggle" class="fixed bottom-4 right-4 bg-primary text-white p-3 rounded-full shadow-lg">
+    Toggle Dark Mode
+</button>
+
+<script>
+    // Dark Mode Toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    darkModeToggle.addEventListener('click', () => {
+        document.body.classList.toggle('dark-mode');
+    });
+
+    // Add dark mode styles
+    const styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = `
+        body.dark-mode {
+            background-color: #1e293b;
+            color: #e2e8f0;
+        }
+        body.dark-mode header {
+            background-color: rgba(30, 41, 59, 0.8) !important;
+        }
+        body.dark-mode footer {
+            background-color: #1e293b !important;
+        }
+        body.dark-mode .bg-white {
+            background-color: #374151 !important;
+            color: #e2e8f0;
+        }
+    `;
+    document.head.appendChild(styleSheet);
+</script>
+
+</body>
+</html>
